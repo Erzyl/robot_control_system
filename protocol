@@ -1,0 +1,15 @@
+h_get[14]
+sw_washerPut
+washer: demo/2_W_wash_80uL_A.LHC
+h_get[16]
+d_put
+dispenser: demo/3_D_dispense_60uL_PFA_Sa.LHC
+sw_washerGet
+h_put[17]
+d_get
+h_put[0]
+h_get[17]
+d_put
+dispenser: demo/3_D_dispense_60uL_PFA_Sa.LHC
+d_get
+h_put[17]

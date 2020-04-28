@@ -1,0 +1,40 @@
+h_get[14]
+sw_washerPut
+h_checkPoint10
+washer: demo/2_W_wash_80uL_A.LHC
+h_checkPoint10
+h_get[16]
+h_to_sw
+sw_putHor
+griperOpen
+sw_safe_horToVer
+d_put
+dispenser: demo/3_D_dispense_60uL_PFA_Sa.LHC
+sw_safe_verToHor
+sw_to_washHigh
+sw_washerGet
+washHigh_to_sw
+sw_putHorHigh
+sw_getHor
+sw_to_h
+h_put[17]
+h_to_sw
+sw_safe_horToVer
+d_get
+sw_safe_verToHor
+sw_getHor
+sw_to_h
+h_put[0]
+h_checkPoint10
+h_get[17]
+h_to_sw
+sw_putHor
+griperOpen
+sw_safe_horToVer
+d_put
+dispenser: demo/3_D_dispense_60uL_PFA_Sa.LHC
+d_get
+sw_safe_verToHor
+sw_getHor
+sw_to_h
+h_put[17]
