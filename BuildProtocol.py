@@ -63,15 +63,16 @@ class BuildProtocol:
         self.device_list = [self.washer_play,self.dispenser_play,self.shaker_play]
 
 
-    def build_protocol(self, file = "protocol"):
+    def build_protocol(self, movement):
 
         # Load protocol file
-        with open(file) as f:
-            self.protocol = f.read().splitlines()
+        # with open(file) as f:
+        #     self.protocol = f.read().splitlines()
         
-        add_checkpoints = False if "_cp" in file else True
-        if add_checkpoints == True:
-
+        # add_checkpoints = False if "_cp" in file else True
+        # if add_checkpoints == True:
+        self.protocol = movement
+        for f in movement:
             def cp(spot, value,a):
                 self.protocol.insert(spot+1+a,value)
                 return a + 1
@@ -159,16 +160,18 @@ class BuildProtocol:
                     print("Trying to go from {0} to {1}".format(s,sn))
 
             # Build and return new file
-            with open(file + '_cp','w') as f:
+            with open("file" + '_cp','w') as f:
                 for x in self.protocol:
                     f.write(str(x) +'\n')
 
+            return self.protocol
+
         
-if __name__ == "__main__":
-    b = BuildProtocol()
-    b.build_protocol()
-    print(b.protocol)
-    print(len(b.protocol))
+# if __name__ == "__main__":
+#     b = BuildProtocol()
+#     b.build_protocol()
+#     print(b.protocol)
+#     print(len(b.protocol))
 
 
 

@@ -35,7 +35,7 @@ class RoboRun:
             self.execute_protocol(c)
 
         # Stop
-        self.tn.write(b"quit\n")
+        #self.tn.write(b"quit\n")
 
 
     def execute_protocol(self, program):
