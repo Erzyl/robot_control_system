@@ -18,12 +18,17 @@ class EventServer:
         self.host = ip
         self.port = port  
         self.Running = True
-        self.plate_list = []
 
-        self.current_global_position = "h_checkPoint10"
+        self.plate_list = []
+        self.lid_spots = [-1]*3
+        self.hotel_spots = [0]*14
+
+        self.current_global_position = "h_get"
         self.build_checkpoints = BuildProtocol()
         self.robot_connection = RoboConnect()
         self.robot_run = RoboRun()
+
+
 
     def run_server(self):
 
@@ -60,23 +65,55 @@ class EventServer:
     
     def move_next(self): # Do the next moves
         move_from = self.current_global_position
-        plateToMove = self.priority_system()
-        move_to = self.plate_list[plateToMove]
+        plateToMove = self.plate_list[self.priority_system()]
+        move_to = plateToMove.path[plateToMove.curStep]
         movment = [move_from,move_to]
+        self.plate_list[self.priority_system()].step()
         # Get list with all the check points from current pos to target pos
-        movement_with_cp = self.build_checkpoints.build_protocol(movment)
+        movement_with_cp = self.build_checkpoints.build_protocol(movment,id,plateToMove)
         # Run system between the 2 steps including checkpoints
-        self.robot_run.start(self.robot_connection.tn, movement_with_cp)
+        self.robot_run.start(self.robot_connection.tn, movement_with_cp,id,plateToMove)
 
         self.current_global_position = move_to
 
 
 
     def priority_system(self): # Get the next moves
-        cur_move = 0
-        self.plate_list[cur_move].step()
+        
+        for plate in self.plate_list: ## Currently prioritises plates added in order
+            cur_step = plate.path[plate.curStep]
+            if self.build_checkpoints.w_get in cur_step:
+                if self.robot_run.is_washer_ready(): # Set a min time for readines
+                    return plate.id
+                else:
+                    continue
+            elif self.build_checkpoints.d_get in cur_step:
+                if self.robot_run.is_dispenser_ready(): # Set a min time for readines
+                    return plate.id
+                else:
+                    continue
+            elif self.build_checkpoints.s_get in cur_step:
+                if self.robot_run.is_shaker_ready(): # Set a min time for readines
+                    return plate.id
+                else:
+                    continue
+            elif self.build_checkpoints.hp in cur_step: # Return plate to hotel
+                self.hotel_spots.append(0)
+                return plate.id
+            elif self.build_checkpoints.hg in cur_step: # Get plate from hotel
+                # Reserv lid spot
+                fs = self.get_free_lid_spot()
+                if fs != -1:
+                    self.lid_spots[fs] = plate.id # Add lid spots directly to plate object?
+                    return plate.id
+                else:
+                    continue
+            else: # If last spot was not to a device
+                return plate.id
 
-        return 0 # Return plate that should be moved
+        # if plate has no more paths, add h_put to free spot
+
+        return -1 
 
 
     def plate_inputs(self):
@@ -127,11 +164,26 @@ class EventServer:
     def get_plate_info(self,plate_num):
         plate = self.plate_list[plate_num-1]
         print("Plate number {0}, status:".format(plate.id))
-        print("Current position: {0}".format(plate.current))
-        print("Destination: {0}".format(plate.destination))
+        print("Current position: {0}".format(plate.path[plate.cur_step]))
+        # Check if not at last
+        print("Destination: {0}".format(plate.path[plate.cur_step+1]))
 
     def is_num(self,string):
         return any(i.isdigit() for i in string)
+
+
+    def get_free_lid_spot(self):
+        index = 0
+        for x in self.lid_spots:
+            if x == -1:
+                return index
+        return -1
+    
+    def get_lid_spot(self,plate_id):
+        try:
+            return self.lid_spots.index(plate_id)
+        except ValueError:
+            return -1
 
 
 if __name__ == "__main__":

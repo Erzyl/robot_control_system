@@ -15,12 +15,12 @@ class RoboRun:
         self.tn = -1
         self.pd = BuildProtocol()
 
-
-    def start(self, telnet_connection, protocol):
+    def start(self, telnet_connection, protocol, event_server, plate_id):
         self.tn = telnet_connection
         self.protocol = protocol
         self.run()
-
+        self.es = event_server
+        self.plate_id = plate_id
 
     def run(self):
 
@@ -46,17 +46,17 @@ class RoboRun:
             self.play_dispenser(program)
         elif self.pd.shaker_play in program:
             self.play_shaker(program)
-        elif program == self.pd.washer_wait:
-            while (not self.is_washer_ready()):
-                time.sleep(1)
-        elif program == self.pd.dispenser_wait:
-            while (not self.is_dispenser_ready()):
-                time.sleep(1)
-        elif program == self.pd.shaker_wait:
-            while (not self.is_shaker_ready()):
-                time.sleep(1)
+        # elif program == self.pd.washer_wait:
+        #     while (not self.is_washer_ready()):
+        #         time.sleep(1)
+        # elif program == self.pd.dispenser_wait:
+        #     while (not self.is_dispenser_ready()):
+        #         time.sleep(1)
+        # elif program == self.pd.shaker_wait:
+        #     while (not self.is_shaker_ready()):
+        #         time.sleep(1)
         else:
-            print("Attempting: "+program)
+            print("Loading: "+program)
             prog = "load " + self.DEFAULT_PATH + program + ".urp\n"
             self.tn.write(bytes(prog, 'ascii'))
             time.sleep(1)
@@ -65,10 +65,14 @@ class RoboRun:
 
             has_played = False
             #self.get_run_status()
-            while self.get_run_status() == "Program running: true\n":
+            while self.get_run_status() == "Program running: true\n": # Freeze roboRunner if arm is being used
                 print("PLAYING")
                 time.sleep(1)
                 has_played = True
+
+            if self.pd.sw_lidOn:
+                spot = self.es.get_lid_spot(self.plate_id)
+                self.es.lid_spots[spot] = -1
 
             if has_played:
                 print("Finished: " + program)
@@ -102,6 +106,7 @@ class RoboRun:
         print("Starting shaker")
         p1, p2 = protocol.rsplit(": ")
         requests.get(self.SHAKER_PATH + p2)
+
 
     def is_dispenser_ready(self):
         r = requests.get('http://dispenser.lab.pharmb.io:5001/is_ready')
