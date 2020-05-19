@@ -68,7 +68,7 @@ class BuildProtocol:
 
 
     def build_protocol(self, movement,event_server,plate_id):
-
+        print(movement) # ['washer: demo/2_W_wash_80uL_A.LHC', 'dispenser: demo/3_D_dispense_60uL_PFA_Sa.LHC']
         es = event_server
         # Load protocol file
         # with open(file) as f:
@@ -82,6 +82,7 @@ class BuildProtocol:
                 self.protocol.insert(spot+1+a,value)
                 return a + 1
                 
+            print(f)
             # Define spot here or in runner? Probably here
             def put_lid_on(): 
                 #Add lid on protocol 
@@ -121,6 +122,7 @@ class BuildProtocol:
                 s = str(p[i+a]) if len(p) > i+a else str(p[-1]) # current step
                 sn = str(p[i+1+a]) if len(p) > i+a+1 else s # next step
 
+                
                 # ignore checking device-play steps
                 # for d in self.device_list:
                 #     if d in sn:
@@ -138,8 +140,9 @@ class BuildProtocol:
 
                 # Add proper lid and delidding, side function
                 # Determine shaker path
-
-                if s in self.h_get:
+                if s in self.hg and sn in self.hg: # Go from starting pos to 
+                    break
+                elif s in self.hg:
                     if sn in self.washer_play:
                         a = cp(i,self.h_to_sw,a)
                         put_lid_off()
@@ -232,8 +235,8 @@ class BuildProtocol:
                         a = cp(i,self.s_put,a)
 
 
-               
-
+            self.protocol.pop(0) # Remove first item as its only a pointer for where to go from
+            print("PROTOCOL GOT BUILT! #########################################")
             # Build and return new file
             with open("file" + '_cp','w') as f:
                 for x in self.protocol:

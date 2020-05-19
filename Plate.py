@@ -8,7 +8,7 @@ class Plate:
         self.cur_step = 0
         self.path = path
 
-        self.get_num = re.findall(r'[0-100]',self.path[0])
+        self.get_num = re.findall(r'[0-9]+',self.path[0])
         self.path[0] = "h_get" + self.get_num[0] # Turn user input start position into protocol name
         self.add_paths()
         self.path.append("h_put") # Add hotel return as last command
