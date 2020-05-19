@@ -16,7 +16,7 @@ class EventServer:
 
     def __init__(self,ip = '127.0.0.1',port = 65432):
         self.host = ip
-        self.port = port  
+        self.port = port
         self.Running = True
 
         self.plate_list = []
@@ -28,21 +28,22 @@ class EventServer:
         self.robot_connection = RoboConnect()
         self.robot_run = RoboRun()
 
-
+        self.connect_to_robot = False
 
     def run_server(self):
 
 
-        # Start connection to robot server     
-        self.robot_connection.connect()
-    
-        
+        # Start connection to robot server
+        if self.connect_to_robot:
+            self.robot_connection.connect()
+
+
          # Thread: Get key inputs
         key_input_manager = threading.Thread(target=self.get_input, args=('Message',))
         key_input_manager.start()
 
         # Thread: Get new plate inputs, protocol files or single commmands
-        input_server = threading.Thread(target=self.plate_list)
+        input_server = threading.Thread(target=self.plate_inputs)
         input_server.start()
 
         # Thread: Run system
@@ -53,16 +54,19 @@ class EventServer:
 
     def system_runner(self):
         #go_next = 0
+
         while True:
             #go_next = go_next + 0.01 if go_next < 1 else 1
 
-            #if go_next == 1:
-                #go_next = 0
+
+            if len(self.plate_list) == 0 or not self.connect_to_robot:
+                time.sleep(2)
+                continue
             # Add threading here for overlapping movment
             self.move_next()
 
     # When reached target, change current to dest and move on etc.
-    
+
     def move_next(self): # Do the next moves
         move_from = self.current_global_position
         plateToMove = self.plate_list[self.priority_system()]
@@ -79,7 +83,7 @@ class EventServer:
 
 
     def priority_system(self): # Get the next moves
-        
+
         for plate in self.plate_list: ## Currently prioritises plates added in order
             cur_step = plate.path[plate.curStep]
             if self.build_checkpoints.w_get in cur_step:
@@ -118,7 +122,7 @@ class EventServer:
 
         # if plate has no more paths, add h_put to free spot
 
-        return -1 
+        return -1
 
 
     def plate_inputs(self):
@@ -131,7 +135,7 @@ class EventServer:
 
 
             while self.Running:
-                
+
                 conn, addr = s.accept() # New connection creates new s. Touple (ip,port)
                 with conn: # With the new connection
 
@@ -141,18 +145,20 @@ class EventServer:
                     #self.main_list.append(data_decoded)
 
                     # Add new plate
-                    print('New entry by', addr) 
+                    print('New entry by', addr)
                     data = pickle.loads(conn.recv(4096)) # Reads what client sends
                     plate_number = len(self.plate_list)+1
+                    h_spot = re.findall(r'[0-100]',data[0])
+                    self.hotel_spots[0] = plate_number
 
-                    h_spot = re.findall(r'\d+',data[0])
-                    self.hotel_spots[h_spot] = plate_number
                     newPlate = Plate(plate_number,data)
-                    self.plate_list.append(newPlate)             
-                    for x in data:
-                        print(x)
- 
-                    conn.send(bytes("Entry successfully added!","ascii"))         
+
+                    self.plate_list.append(newPlate)
+                    print('Current amount of plates: ' +str(len(self.plate_list)))
+                    # for x in data:
+                    #     print(x)
+
+                    conn.send(bytes("Entry successfully added!","ascii"))
         #s.close()
 
 
@@ -168,9 +174,10 @@ class EventServer:
                     else:
                         print("Plate not found")
 
-    
+
     def get_plate_info(self,plate_num):
-        plate = self.plate_list[plate_num-1]
+        print("Stufs: " +str(len(self.plate_list)))
+        plate = self.plate_list[1]
         print("Plate number {0}, status:".format(plate.id))
         print("Current position: {0}".format(plate.path[plate.cur_step]))
         # Check if not at last
@@ -186,7 +193,7 @@ class EventServer:
             if x == -1:
                 return index
         return -1
-    
+
     def get_lid_spot(self,plate_id):
         try:
             return self.lid_spots.index(plate_id)
@@ -205,7 +212,7 @@ class EventServer:
             return self.lid_spots.index(plate_id)
         except ValueError:
             return -1
-    
+
 
 if __name__ == "__main__":
     e = EventServer("127.0.0.1",65432)
