@@ -98,8 +98,13 @@ class EventServer:
                 else:
                     continue
             elif self.build_checkpoints.hp in cur_step: # Return plate to hotel
-                self.hotel_spots.append(0)
-                return plate.id
+                # Reservs a hotel spot before returning plate to hotel
+                fs = self.get_free_hotel_spot()
+                if fs != -1:
+                    self.hotel_spots[fs] = plate.id
+                    return plate.id
+                else:
+                    continue # Should not work in case robot is already holding a plate
             elif self.build_checkpoints.hg in cur_step: # Get plate from hotel
                 # Reserv lid spot
                 fs = self.get_free_lid_spot()
@@ -107,7 +112,7 @@ class EventServer:
                     self.lid_spots[fs] = plate.id # Add lid spots directly to plate object?
                     return plate.id
                 else:
-                    continue
+                    continue # Should not work in case robot is already holding a plate
             else: # If last spot was not to a device
                 return plate.id
 
@@ -139,6 +144,9 @@ class EventServer:
                     print('New entry by', addr) 
                     data = pickle.loads(conn.recv(4096)) # Reads what client sends
                     plate_number = len(self.plate_list)+1
+
+                    h_spot = re.findall(r'\d+',data[0])
+                    self.hotel_spots[h_spot] = plate_number
                     newPlate = Plate(plate_number,data)
                     self.plate_list.append(newPlate)             
                     for x in data:
@@ -185,6 +193,19 @@ class EventServer:
         except ValueError:
             return -1
 
+    def get_free_hotel_spot(self):
+        index = 0
+        for x in self.hotel_spots:
+            if x == -1:
+                return index
+        return -1
+
+    def get_hotel_spot(self,plate_id):
+        try:
+            return self.lid_spots.index(plate_id)
+        except ValueError:
+            return -1
+    
 
 if __name__ == "__main__":
     e = EventServer("127.0.0.1",65432)

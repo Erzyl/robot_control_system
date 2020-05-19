@@ -70,9 +70,15 @@ class RoboRun:
                 time.sleep(1)
                 has_played = True
 
-            if self.pd.sw_lidOn:
+            # Free up lid spot after puting lid back on the plate
+            if program in self.pd.sw_lidOn:
                 spot = self.es.get_lid_spot(self.plate_id)
                 self.es.lid_spots[spot] = -1
+
+            # Free up hotel spot after taking the plate from the hotel
+            if program in self.pd.hg:
+                spot = self.es.get_hotel_spot(self.plate_id)
+                self.es.hotel_spots[spot] = -1
 
             if has_played:
                 print("Finished: " + program)
