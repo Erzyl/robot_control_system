@@ -159,26 +159,32 @@ class EventServer:
                     #     print(x)
 
                     conn.send(bytes("Entry successfully added!","ascii"))
-        #s.close()
+        s.close()
 
 
     def get_input(self,s):
         while True:
             s = input()
             time.sleep(0.5)
+
             if "plate" in s:
                 if self.is_num(s):
                     num = int(s[len(s)-1])
                     if len(self.plate_list) >= num:
-                        self.get_plate_info(num)
+                        self.get_plate_info(num-1)
                     else:
                         print("Plate not found")
+            if "get plates" in s:
+                self.get_plates_in_system()
 
+
+    def get_plates_in_system(self):
+        for cur_plate in self.plate_list:
+            print("Plate id: " + str(cur_plate.id))
 
     def get_plate_info(self,plate_num):
-        print("Stufs: " +str(len(self.plate_list)))
-        plate = self.plate_list[1]
-        print("Plate number {0}, status:".format(plate.id))
+        plate = self.plate_list[plate_num]
+        print("Plate id: {0}, status:".format(plate.id))
         print("Current position: {0}".format(plate.path[plate.cur_step]))
         # Check if not at last
         print("Destination: {0}".format(plate.path[plate.cur_step+1]))
