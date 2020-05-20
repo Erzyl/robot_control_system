@@ -28,7 +28,7 @@ class EventServer:
         self.robot_connection = RoboConnect()
         self.robot_run = RoboRun()
 
-        self.connect_to_robot = False
+        self.connect_to_robot = True
 
     def run_server(self):
 
@@ -79,10 +79,11 @@ class EventServer:
         data_to_protocol = [self.hotel_spots,self.lid_spots]
         movement_with_cp = self.build_checkpoints.build_protocol(movment,plateToMove.id, data_to_protocol)
         # Run system between the 2 steps including checkpoints
-        
-        if self.connect_to_robot:
-            self.robot_run.start(self.robot_connection.tn, movement_with_cp,id,plateToMove)
 
+        if self.connect_to_robot: #telnet_connection, protocol, event_server, plate_id):
+            print("Here")
+            self.robot_run.start(self.robot_connection.tn, movement_with_cp,id,plateToMove)
+            print("Here")
             self.current_global_position = move_to
         else:
             time.sleep(20)
@@ -138,7 +139,7 @@ class EventServer:
             s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1) # To force socket rebindin
             s.bind((self.host, self.port)) # Associate socket with specific network interface nad port
             s.listen() # Enables server to accept connections / Makes it a listening socket
-            print('Server Started')
+            print('Protocol server started successfully!')
 
 
             while self.Running:
@@ -152,7 +153,7 @@ class EventServer:
                     plate_number = len(self.plate_list)+1
 
                     h_spot = re.findall(r'[0-9]+',data[0])
-                
+
                     self.hotel_spots[int(h_spot[0])-1] = plate_number
 
                     newPlate = Plate(plate_number,data)

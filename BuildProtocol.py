@@ -24,7 +24,7 @@ class BuildProtocol:
         self.hg             = new_pos("h_get")
         self.hp             = new_pos("h_put")
         self.h_get          = [new_pos("h_get" + str(i + 1)) for i in range(self.HOTEL_SPOTS)]
-        self.h_put          = [new_pos("h_put" + str(i + 1)) for i in range(self.HOTEL_SPOTS)]       
+        self.h_put          = [new_pos("h_put" + str(i + 1)) for i in range(self.HOTEL_SPOTS)]
         self.h_checkPoint   = new_pos("h_checkPoint10")
         self.h_to_sw        = new_pos("h_to_sw")
 
@@ -37,7 +37,7 @@ class BuildProtocol:
         # dispenser
         self.d_get          = new_pos("d_get")
         self.d_put          = new_pos("d_put")
-   
+
         # shaker
         self.s_get          = [new_pos("s_get" + str(i + 1)) for i in range(self.SHAKER_SPOTS)]
         self.s_put          = [new_pos("s_put" + str(i + 1)) for i in range(self.SHAKER_SPOTS)]
@@ -53,7 +53,7 @@ class BuildProtocol:
         self.sw_getVer      = new_pos("sw_getVer")
         self.sw_putVer      = new_pos("sw_putVer")
         self.sw_to_h        = new_pos("sw_to_h")
-        self.sw_to_washHigh = new_pos("sw_to_washHigh")   
+        self.sw_to_washHigh = new_pos("sw_to_washHigh")
         self.gripper_open   = new_pos("griperOpen")
         self.horToVer       = new_pos("sw_safe_horToVer")
         self.verToHor       = new_pos("sw_safe_verToHor")
@@ -78,14 +78,14 @@ class BuildProtocol:
 
 
     def build_protocol(self, movement,plate_id, data_list):
-        
+
         hotel_spots = data_list[0]
         lid_spots = data_list[1]
-   
+
         # Load protocol file
         # with open(file) as f:
         #     self.protocol = f.read().splitlines()
-        
+
         # add_checkpoints = False if "_cp" in file else True
         # if add_checkpoints == True:
         self.protocol = movement # List contains current pos and destination pos
@@ -95,11 +95,11 @@ class BuildProtocol:
         def cp(spot, value,a):
             self.protocol.insert(spot+1+a,value)
             return a + 1
-        
+
         #print(f)
         # Define spot here or in runner? Probably here
-        def put_lid_on(a): 
-            #Add lid on protocol 
+        def put_lid_on(a):
+            #Add lid on protocol
             spot = self.get_spot(plate_id,lid_spots)
             a = cp(i,self.sw_lidOn[spot],a)
             return a
@@ -119,7 +119,7 @@ class BuildProtocol:
             else:
                 a = cp(i,self.horToVer,a)
             return a
-        
+
         def switch_to_hor(has_plate,a):
             if has_plate:
                 a = cp(i,self.sw_putVer,a)
@@ -163,7 +163,7 @@ class BuildProtocol:
 
             # Add proper lid and delidding, side function
             # Determine shaker path
-            if s in self.hg and sn in self.hg: # Go from starting pos to 
+            if s in self.hg and sn in self.hg: # Go from starting pos to
                 break
             elif self.hg in s:
                 if self.washer_play in sn:
@@ -228,8 +228,8 @@ class BuildProtocol:
                     a = switch_to_hor(True,a)
                     a = put_lid_on(a)
                     a = cp(i,self.sw_to_h,a)
-                    a = put_in_hotel(a)                
-            elif s in self.w_get:    
+                    a = put_in_hotel(a)
+            elif s in self.w_get:
                 if self.washer_play in sn:
                     a = cp(i,self.w_put,a)
                 elif self.dispenser_play in sn:
@@ -240,7 +240,7 @@ class BuildProtocol:
                     a = cp(i,self.washHigh_to_sw,a)
                     a = put_lid_on(a)
                     a = cp(i,self.sw_to_h,a)
-                    a = put_in_hotel(a) 
+                    a = put_in_hotel(a)
                 elif self.shaker_play in sn:
                     # Add shaker CP
                     a = cp(i,self.s_put,a)
@@ -253,7 +253,7 @@ class BuildProtocol:
                     a = cp(i,self.d_put,a)
                 elif sn in self.h_put:
                     # Add shaker CP
-                    a = put_in_hotel(a) 
+                    a = put_in_hotel(a)
                 elif self.shaker_play in sn:
                     a = cp(i,self.s_put,a)
 
@@ -261,13 +261,13 @@ class BuildProtocol:
             self.protocol.pop(0) # Remove first item as its only a pointer for where to go from
             print("PROTOCOL GOT BUILT! #########################################")
             # Build and return new file
-            with open("file" + '_cp','w') as f:
-                for x in self.protocol:
-                    f.write(str(x) +'\n')
+            # with open("file" + '_cp','w') as f:
+            #     for x in self.protocol:
+            #         f.write(str(x) +'\n')
 
             return self.protocol
 
-        
+
 # if __name__ == "__main__":
 #     b = BuildProtocol()
 #     b.build_protocol()

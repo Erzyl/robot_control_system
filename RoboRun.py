@@ -21,6 +21,7 @@ class RoboRun:
         self.run()
         self.es = event_server
         self.plate_id = plate_id
+        print("Here")
 
     def run(self):
 
@@ -143,7 +144,7 @@ class RoboRun:
         else:
             print("Shaker is not ready")
             return False
-   
+
 
     def read_last(self):
         #buffer = self.tn.read_eager().decode('ascii')
@@ -159,6 +160,3 @@ class RoboRun:
         status = self.read_last()
         #print("Run status: " + status)
         return status
-
-
-
