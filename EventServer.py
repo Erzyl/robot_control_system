@@ -81,10 +81,12 @@ class EventServer:
         # Run system between the 2 steps including checkpoints
 
         if self.connect_to_robot: #telnet_connection, protocol, event_server, plate_id):
-            print("Here")
-            self.robot_run.start(self.robot_connection.tn, movement_with_cp,id,plateToMove)
-            print("Here")
+            # id cant bere here
+            self.robot_run.start(self.robot_connection.tn, movement_with_cp,id,plateToMove) # Holds this thread until run is done, might want to split
+
             self.current_global_position = move_to
+            self.plate_list[self.get_plate_list_index(plateToMove)].step() # Advance plate to next step in path
+            
         else:
             time.sleep(20)
 
