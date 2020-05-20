@@ -71,11 +71,13 @@ class EventServer:
         move_from = self.current_global_position
         plateToMove = self.priority_system() #self.plate_list[self.priority_system()]
         move_to = plateToMove.path[plateToMove.cur_step]
-        #movment = [move_from,move_to]
-        movment = ["washer: demo/2_W_wash_80uL_A.LHC","dispenser: demo/3_D_dispense_60uL_PFA_Sa.LHC"]
+        movment = [move_from,move_to]
+        #movment = ["w_get","h_put"]
         #self.plate_list[self.priority_system()].step()
         # Get list with all the check points from current pos to target pos
-        movement_with_cp = self.build_checkpoints.build_protocol(movment,id,plateToMove)
+
+        data_to_protocol = [self.hotel_spots,self.lid_spots]
+        movement_with_cp = self.build_checkpoints.build_protocol(movment,plateToMove.id, data_to_protocol)
         # Run system between the 2 steps including checkpoints
         
         if self.connect_to_robot:

@@ -1,1 +1,4 @@
-dispenser: demo/3_D_dispense_60uL_PFA_Sa.LHC
+washHigh_to_sw
+sw_lidOn3
+sw_to_h
+h_put5
