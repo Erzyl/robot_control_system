@@ -82,12 +82,16 @@ class EventServer:
 
         if self.connect_to_robot: #telnet_connection, protocol, event_server, plate_id):
             # id cant bere here
-            self.robot_run.start(self.robot_connection.tn, movement_with_cp,id,plateToMove) # Holds this thread until run is done, might want to split
+            data_list = [self.hotel_spots,self.lid_spots]
+            updated_lists = self.robot_run.start(self.robot_connection.tn, movement_with_cp,data_list,plateToMove) # Holds this thread until run is done, might want to split
+
+            self.hotel_spots = updated_lists[0]
+            self.lid_spots = updated_lists[1]
 
             self.current_global_position = move_to
             self.plate_list[self.get_plate_list_index(plateToMove)].step() # Advance plate to next step in path
             
-        else:
+        else: # For debugging without connecting to robot
             time.sleep(20)
 
 
@@ -244,9 +248,9 @@ class EventServer:
                 return index
         return -1
 
-    def get_lid_spot(self,plate_id):
+    def get_list_spot(self,plate_id,lista):
         try:
-            return self.lid_spots.index(plate_id)
+            return lista.index(plate_id)
         except ValueError:
             return -1
 
@@ -257,11 +261,6 @@ class EventServer:
                 return index
         return -1
 
-    def get_hotel_spot(self,plate_id):
-        try:
-            return self.lid_spots.index(plate_id)
-        except ValueError:
-            return -1
 
 
 

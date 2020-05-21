@@ -15,13 +15,17 @@ class RoboRun:
         self.tn = -1
         self.pd = BuildProtocol()
 
-    def start(self, telnet_connection, protocol, event_server, plate_id):
+    def start(self, telnet_connection, protocol, data_list, plate_id):
         self.tn = telnet_connection
         self.protocol = protocol
-        self.run()
-        self.es = event_server
+        self.hotel_spots = data_list[0]
+        self.lid_spots = data_list[1]
         self.plate_id = plate_id
-        print("Here")
+
+        self.run()
+        
+        data = [self.hotel_spots,self.lid_spots]
+        return data
 
     def run(self):
 
@@ -73,19 +77,25 @@ class RoboRun:
 
             # Free up lid spot after puting lid back on the plate
             if program in self.pd.sw_lidOn:
-                spot = self.es.get_lid_spot(self.plate_id)
-                self.es.lid_spots[spot] = -1
+                spot = self.get_list_spot(self.plate_id,self.lid_spots)
+                self.lid_spots[spot] = -1
 
             # Free up hotel spot after taking the plate from the hotel
             if program in self.pd.hg:
-                spot = self.es.get_hotel_spot(self.plate_id)
-                self.es.hotel_spots[spot] = -1
+                spot = self.get_list_spot(self.plate_id,self.lid_spots)
+                self.hotel_spots[spot] = -1
 
             if has_played:
                 print("Finished: " + program)
             else:
                 print("Failed: " + program)
 
+
+    def get_list_spot(self,plate_id,lista):
+        try:
+            return lista.index(plate_id)
+        except ValueError:
+            return -1
 
     def play_washer(self, protocol):
         time.sleep(1) # Give the arm time to move out of the way
