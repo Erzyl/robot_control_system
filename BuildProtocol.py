@@ -82,22 +82,15 @@ class BuildProtocol:
         hotel_spots = data_list[0]
         lid_spots = data_list[1]
 
-        # Load protocol file
-        # with open(file) as f:
-        #     self.protocol = f.read().splitlines()
-
-        # add_checkpoints = False if "_cp" in file else True
-        # if add_checkpoints == True:
+        
         self.protocol = movement # List contains current pos and destination pos
 
         a = 0 # handles offsets in the list
-        #for f in movement: # Added checkpoints to inputed list
+
         def cp(spot, value,a):
             self.protocol.insert(spot+1+a,value)
             return a + 1
 
-        #print(f)
-        # Define spot here or in runner? Probably here
         def put_lid_on(a):
             #Add lid on protocol
             spot = self.get_spot(plate_id,lid_spots)
@@ -139,26 +132,26 @@ class BuildProtocol:
 
         # Add checkpoints
         p = self.protocol
-        #a = 0 # handles offsets in the list
-        for i in range(len(p)): # Added proper check points at each step
+        
+        for i in range(len(p)): # Incase a longer main path should be built in one go in the future
+            # a handles offsets in the list
             s = str(p[i+a]) if len(p) > i+a else str(p[-1]) # current step
             sn = str(p[i+1+a]) if len(p) > i+a+1 else s # next step
 
             print("Building path from: " +s)
             print("to: " +sn)
-            # ignore checking device-play steps
-            # for d in self.device_list:
-            #     if d in sn:
-            #         a += 1
-            #         sn = str(p[i+1+a]) if len(p) != i+a+1 else s
 
-            # Update: new(from,to,cp_list[])
-            # num1 = re.findall(r'\d+',s)
-            # num2 = re.findall(r'\d+',sn)
-            # if num1 and num2: # (Should have more checks then just numbers)
-            #     dif = abs(int(num1[0])-int(num2[0]))
-            #     if dif >= 10: # Hotel to hotel, too far away
-            #         a = cp(i,self.h_checkPoint,a)
+            a = cp(i,self.h_checkPoint,a)
+
+            s_num = re.findall(r'[0-9]+',s)
+            sn_num = re.findall(r'[0-9]+',sn)
+    
+            if (self.hg in sn or self.hp in sn): # Going to a hotel spot
+                if s_num < HOTEL_SPOTS/2: # Need extra checkpoint if going to bottom half
+                    a = cp(i,self.h_checkPoint)
+            elif (self.hg in s or self.hp in s): # If last spot was hotel and next isn't
+                if s_num < HOTEL_SPOTS/2:
+                    a = cp(i,self.h_checkPoint)
 
 
             # Add proper lid and delidding, side function
@@ -259,7 +252,7 @@ class BuildProtocol:
 
 
             self.protocol.pop(0) # Remove first item as its only a pointer for where to go from
-            print("PROTOCOL GOT BUILT! #########################################")
+            print("Protocol built!")
             # Build and return new file
             # with open("file" + '_cp','w') as f:
             #     for x in self.protocol:
@@ -273,7 +266,3 @@ class BuildProtocol:
 #     b.build_protocol()
 #     print(b.protocol)
 #     print(len(b.protocol))
-
-
-
-# DUMP

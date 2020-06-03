@@ -12,7 +12,7 @@ class Plate:
         self.path[0] = "h_get" + self.get_num[0] # Turn user input start position into protocol name
         self.add_paths()
         self.path.append("h_put") # Add hotel return as last command
-        print(self.path)
+        #print(self.path)
 
 
     def add_paths(self):
@@ -22,10 +22,8 @@ class Plate:
             if "washer" in self.path[i]:
                 self.path.insert(i+1 , "w_get")
             elif "dispenser" in self.path[i]:
-
                 self.path.insert(i+1 , "d_get")
             elif "shaker" in self.path[i]:
-                
                 self.path.insert(i+1 , "s_get")
             
 

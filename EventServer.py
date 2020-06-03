@@ -10,6 +10,7 @@ from Plate import Plate
 from RoboConnect import RoboConnect
 from BuildProtocol import BuildProtocol
 from RoboRun import RoboRun
+from Prioritizer import Prioritizer
 
 
 class EventServer:
@@ -17,7 +18,7 @@ class EventServer:
     def __init__(self,ip = '127.0.0.1',port = 65432):
         self.host = ip
         self.port = port
-        self.Running = True
+        self.Running = True # Run robot and devices
 
         self.plate_list = []
         self.lid_spots = [-1]*3
@@ -27,16 +28,16 @@ class EventServer:
         self.build_checkpoints = BuildProtocol()
         self.robot_connection = RoboConnect()
         self.robot_run = RoboRun()
+        self.prioritizer = Prioritizer()
 
-        self.connect_to_robot = True
+        self.connect_to_robot = True # For debugging without connecting to robot
+
 
     def run_server(self):
-
 
         # Start connection to robot server
         if self.connect_to_robot:
             self.robot_connection.connect()
-
 
          # Thread: Get key inputs
         key_input_manager = threading.Thread(target=self.get_input, args=('Message',))
@@ -46,43 +47,35 @@ class EventServer:
         input_server = threading.Thread(target=self.plate_inputs)
         input_server.start()
 
-        # Thread: Run system
+        # Thread: Run robot and device system
         input_server = threading.Thread(target=self.system_runner)
         input_server.start()
 
 
-
     def system_runner(self):
-        #go_next = 0
 
         while True:
-            #go_next = go_next + 0.01 if go_next < 1 else 1
-
 
             if len(self.plate_list) == 0:
                 time.sleep(2)
                 continue
+
             # Add threading here for overlapping movment
             self.move_next()
 
-    # When reached target, change current to dest and move on etc.
 
+    # When reached target, change current to dest and move on etc.
     def move_next(self): # Do the next moves
         move_from = self.current_global_position
-        plateToMove = self.priority_system() #self.plate_list[self.priority_system()]
+        plateToMove = self.prioritizer.get_prio_plate(self.plate_list,self.hotel_spots,self.lid_spots)
         move_to = plateToMove.path[plateToMove.cur_step]
         movment = [move_from,move_to]
-        #movment = ["w_get","h_put"]
-        #self.plate_list[self.priority_system()].step()
-        # Get list with all the check points from current pos to target pos
 
-        data_to_protocol = [self.hotel_spots,self.lid_spots]
-        movement_with_cp = self.build_checkpoints.build_protocol(movment,plateToMove.id, data_to_protocol)
+        data_list = [self.hotel_spots,self.lid_spots]
+        movement_with_cp = self.build_checkpoints.build_protocol(movment,plateToMove.id, data_list)
+
         # Run system between the 2 steps including checkpoints
-
-        if self.connect_to_robot: #telnet_connection, protocol, event_server, plate_id):
-            # id cant bere here
-            data_list = [self.hotel_spots,self.lid_spots]
+        if self.connect_to_robot:
             updated_lists = self.robot_run.start(self.robot_connection.tn, movement_with_cp,data_list,plateToMove) # Holds this thread until run is done, might want to split
 
             self.hotel_spots = updated_lists[0]
@@ -91,52 +84,8 @@ class EventServer:
             self.current_global_position = move_to
             self.plate_list[self.get_plate_list_index(plateToMove)].step() # Advance plate to next step in path
             
-        else: # For debugging without connecting to robot
+        else: 
             time.sleep(20)
-
-
-
-    def priority_system(self): # Get the next moves
-
-        for plate in self.plate_list: ## Currently prioritises plates added in order
-            cur_step = plate.path[plate.cur_step]
-            if self.build_checkpoints.w_get in cur_step:
-                # if self.robot_run.is_washer_ready(): # Set a min time for readines
-                return plate
-                # else:
-                  #  continue
-            elif self.build_checkpoints.d_get in cur_step:
-                # if self.robot_run.is_dispenser_ready(): # Set a min time for readines
-                return plate
-                # else:
-                    #continue
-            elif self.build_checkpoints.hg in cur_step:
-                # if self.robot_run.is_shaker_ready(): # Set a min time for readines
-                return plate
-                # else:
-                   # continue
-            elif self.build_checkpoints.hp in cur_step: # Return plate to hotel
-                # Reservs a hotel spot before returning plate to hotel
-                fs = self.get_free_hotel_spot()
-                if fs != -1:
-                    self.hotel_spots[fs] = plate.id
-                    return plate
-                else:
-                    continue # Should not work in case robot is already holding a plate
-            elif self.build_checkpoints.hg in cur_step: # Get plate from hotel
-                # Reserv lid spot
-                fs = self.get_free_lid_spot()
-                if fs != -1:
-                    self.lid_spots[fs] = plate.id # Add lid spots directly to plate object?
-                    return plate
-                else:
-                    continue # Should not work in case robot is already holding a plate
-            else: # If last spot was not to a device
-                return plate
-
-        # if plate has no more paths, add h_put to free spot
-
-        return -1
 
 
     def plate_inputs(self):
@@ -166,15 +115,12 @@ class EventServer:
 
                     self.plate_list.append(newPlate)
                     print('Current amount of plates: ' +str(len(self.plate_list)))
-                    # for x in data:
-                    #     print(x)
 
                     conn.send(bytes("Entry successfully added!","ascii"))
         #s.close()
 
 
     ### CHECK INPUTS ###
-
     def get_input(self,s):
         while True:
             s = input()
@@ -207,6 +153,7 @@ class EventServer:
             print("Hotel spot " + str(i+1) + ": " + check)
             i += 1
 
+
     def check_lid(self):
         i = 0
         for cur_spot in self.lid_spots:
@@ -217,9 +164,11 @@ class EventServer:
             print("Lid spot " + str(i+1) + ": " + check)
             i += 1
 
+
     def check_plates(self):
         for cur_plate in self.plate_list:
             print("Plate id: " + str(cur_plate.id))
+
 
     def get_plate_info(self,plate_num):
         plate = self.plate_list[plate_num]
@@ -233,7 +182,6 @@ class EventServer:
 
 
     ### Get spots ###
-
     def get_plate_list_index(self,id):
         i = 0
         for p in self.plate_list:
@@ -241,26 +189,12 @@ class EventServer:
                 return i
             i+=1
 
-    def get_free_lid_spot(self):
-        index = 0
-        for x in self.lid_spots:
-            if x == -1:
-                return index
-        return -1
 
     def get_list_spot(self,plate_id,lista):
         try:
             return lista.index(plate_id)
         except ValueError:
             return -1
-
-    def get_free_hotel_spot(self):
-        index = 0
-        for x in self.hotel_spots:
-            if x == -1:
-                return index
-        return -1
-
 
 
 
