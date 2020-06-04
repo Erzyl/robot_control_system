@@ -5,6 +5,7 @@ import threading
 import time
 import pickle
 import re
+from datetime import datetime
 
 from Plate import Plate
 from RoboConnect import RoboConnect
@@ -52,6 +53,12 @@ class EventServer:
         input_server.start()
 
 
+    def log(self,str_):
+        with open('log', 'a') as file:
+            do = datetime.now()
+            file.write(do.hour, ':', do.minute, ':', do.second, ' ',str_)
+
+
     def system_runner(self):
 
         while True:
@@ -70,6 +77,7 @@ class EventServer:
         plateToMove = self.prioritizer.get_prio_plate(self.plate_list,self.hotel_spots,self.lid_spots)
         move_to = plateToMove.path[plateToMove.cur_step]
         movment = [move_from,move_to]
+        self.log("Deciding to move plate " +str(plateToMove.id)) 
 
         data_list = [self.hotel_spots,self.lid_spots]
         movement_with_cp = self.build_checkpoints.build_protocol(movment,plateToMove.id, data_list)
@@ -114,6 +122,7 @@ class EventServer:
                     newPlate = Plate(plate_number,data)
 
                     self.plate_list.append(newPlate)
+                    self.log("New plate added with id: "+str(plate_number) + " ,at spot:" + str(h_spot))
                     print('Current amount of plates: ' +str(len(self.plate_list)))
 
                     conn.send(bytes("Entry successfully added!","ascii"))
@@ -150,7 +159,9 @@ class EventServer:
             else:
                 check = "{Plate id: " +str(cur_spot) + "}"
 
-            print("Hotel spot " + str(i+1) + ": " + check)
+            str_ = "Hotel spot " + str(i+1) + ": " + check
+            print(str_)
+            self.log("str_")
             i += 1
 
 
@@ -161,13 +172,18 @@ class EventServer:
                 check = "empty"
             else:
                 check = "{Plate id: " +str(cur_spot) + "}"
-            print("Lid spot " + str(i+1) + ": " + check)
+
+            str_ = "Lid spot " + str(i+1) + ": " + check
+            print(str_)
+            self.log(str_)
             i += 1
 
 
     def check_plates(self):
         for cur_plate in self.plate_list:
-            print("Plate id: " + str(cur_plate.id))
+            str_ = "Plate id: " + str(cur_plate.id)
+            print(str_)
+            self.log(str_)
 
 
     def get_plate_info(self,plate_num):

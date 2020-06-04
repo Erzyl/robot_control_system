@@ -3,6 +3,7 @@ import telnetlib
 import time
 import requests
 from BuildProtocol import BuildProtocol
+from datetime import datetime
 
 class RoboRun:
 
@@ -26,6 +27,13 @@ class RoboRun:
         
         data = [self.hotel_spots,self.lid_spots]
         return data
+
+
+    def log(self,str_):
+        with open('log', 'a') as file:
+            do = datetime.now()
+            file.write(do.hour, ':', do.minute, ':', do.second, ' ',str_)
+
 
     def run(self):
 
@@ -68,6 +76,8 @@ class RoboRun:
             self.tn.write(b"play\n")
             time.sleep(1)
 
+            self.log("Moving plate "+ str(self.plate_id) + " to " + str(program))
+
             has_played = False
             #self.get_run_status()
             while self.get_run_status() == "Program running: true\n": # Freeze roboRunner if arm is being used
@@ -87,8 +97,10 @@ class RoboRun:
 
             if has_played:
                 print("Finished: " + program)
+                self.log("Succecfully moved plate "+ str(self.plate_id) + " to " + str(program))
             else:
                 print("Failed: " + program)
+                self.log("Failed moving plate "+ str(self.plate_id) + " to " + str(program))
 
 
     def get_list_spot(self,plate_id,lista):
@@ -104,6 +116,7 @@ class RoboRun:
             print("Waiting for washer to get ready")
         print("Starting Washer")
         p1, p2 = protocol.rsplit(": ")
+        self.log("Starting washer: "+p2)
         requests.get(self.WASHER_PATH + p2)
 
     def play_dispenser(self, protocol):
@@ -113,6 +126,7 @@ class RoboRun:
             print("Waiting for dispenser to get ready")
         print("Starting dispenser")
         p1, p2 = protocol.rsplit(": ")
+        self.log("Starting dispenser: "+p2)
         requests.get(self.DISPENSER_PATH + p2)
 
     def play_shaker(self, protocol):
@@ -122,6 +136,7 @@ class RoboRun:
             print("Waiting for shaker to get ready")
         print("Starting shaker")
         p1, p2 = protocol.rsplit(": ")
+        self.log("Starting shaker: "+p2)
         requests.get(self.SHAKER_PATH + p2)
 
 
