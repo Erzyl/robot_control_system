@@ -1,9 +1,10 @@
 from BuildProtocol import BuildProtocol
+from RoboRun import RoboRun
 
 class Prioritizer:
     def __init__(self):
         self.build_checkpoints = BuildProtocol()
-
+        self.robot_run = RoboRun()
     
 
     def get_prio_plate(self,plate_list,hotel_spots,lid_spots):
@@ -30,7 +31,7 @@ class Prioritizer:
                 # Reservs a hotel spot before returning plate to hotel
                 fs = self.get_free_spot(hotel_spots)
                 if fs != -1:
-                    self.hotel_spots[fs] = plate.id
+                    hotel_spots[fs] = plate.id
                     return plate
                 else:
                     continue # Should not work in case robot is already holding a plate
@@ -38,7 +39,7 @@ class Prioritizer:
                 # Reserv lid spot
                 fs = self.get_free_spot(lid_spots)
                 if fs != -1:
-                    self.lid_spots[fs] = plate.id # Add lid spots directly to plate object?
+                    lid_spots[fs] = plate.id # Add lid spots directly to plate object?
                     return plate
                 else:
                     continue # Should not work in case robot is already holding a plate

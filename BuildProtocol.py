@@ -147,11 +147,11 @@ class BuildProtocol:
             sn_num = re.findall(r'[0-9]+',sn)
     
             if (self.hg in sn or self.hp in sn): # Going to a hotel spot
-                if s_num < HOTEL_SPOTS/2: # Need extra checkpoint if going to bottom half
-                    a = cp(i,self.h_checkPoint)
+                if sn_num < self.HOTEL_SPOTS/2: # Need extra checkpoint if going to bottom half
+                    a = cp(i,self.h_checkPoint,a)
             elif (self.hg in s or self.hp in s): # If last spot was hotel and next isn't
-                if s_num < HOTEL_SPOTS/2:
-                    a = cp(i,self.h_checkPoint)
+                if s_num < self.HOTEL_SPOTS/2:
+                    a = cp(i,self.h_checkPoint,a)
 
 
             # Add proper lid and delidding, side function
