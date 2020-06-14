@@ -7,6 +7,10 @@ class Prioritizer:
         self.robot_run = RoboRun()
     
 
+    # Return a plate based on set conditions.
+    # Currently priotizes plate in the order they
+    # where added to the system, and if they are currently
+    # in a running device.
     def get_prio_plate(self,plate_list,hotel_spots,lid_spots):
 
         for plate in plate_list: # Prioritises plates in added order
@@ -50,7 +54,7 @@ class Prioritizer:
 
         return -1
 
-
+    # Get the index of a spot with the value -1 (a free spot)
     def get_free_spot(self,lista):
         index = 0
         for x in lista:

@@ -8,9 +8,14 @@ class BuildProtocol:
     LID_SPOTS = 3
     positions = []
 
-
+    # Initiate all the spots that can be used
+    # Robot commands are equal to the names on the robot computer (the strings)
+    # The devices (shaker, dispenser and washer) do not inlude protocol names here
     def __init__(self):
 
+
+        # Add a string to the position list and return the string
+        # To alow for easier set up of the commands
         def new_pos(st):
             self.positions.append(st)
             return st
@@ -66,9 +71,11 @@ class BuildProtocol:
         self.dispenser_wait = new_pos("dispenser_wait")
         self.shaker_wait    = new_pos("shaker_wait")
 
-        self.device_list = [self.washer_play,self.dispenser_play,self.shaker_play]
+        #self.device_list = [self.washer_play,self.dispenser_play,self.shaker_play]
 
 
+    # Return a list index of a specific value
+    # Including exception for non-existing
     def get_spot(self,plate_id,lista):
         try:
             return lista.index(plate_id)
@@ -76,40 +83,46 @@ class BuildProtocol:
             return -1
 
 
-
+    # Builds the protocol by adding checkpoints between
+    # the inputed spots. 
+    # Returns the newly built protocol as a list
     def build_protocol(self, movement,plate_id, data_list):
 
-        hotel_spots = data_list[0]
-        lid_spots = data_list[1]
+        hotel_spots = data_list[0] # Collects the hotel_spots from the input data_list
+        lid_spots = data_list[1] # Collects the lid_spots from the input data_list
 
         
         self.protocol = movement # List contains current pos and destination pos
 
         a = 0 # handles offsets in the list
 
+        # Adds checkpoints to the protocol list.
+        # Returns the current offset in the list
         def cp(spot, value,a):
             self.protocol.insert(spot+1+a,value)
             return a + 1
 
+
+        # Checkpoint patterns that used repeatedly
         def put_lid_on(a):
             #Add lid on protocol
-            spot = self.get_spot(plate_id,lid_spots)
+            spot = self.get_spot(plate_id,lid_spots) # Get lid spot for current plate
             a = cp(i,self.sw_lidOn[spot],a)
             return a
 
         def put_lid_off(a):
-            spot = self.get_spot(plate_id,lid_spots)
+            spot = self.get_spot(plate_id,lid_spots) # Get lid spot for current plate
             a = cp(i,self.sw_putHor,a)
             a = cp(i,self.sw_lidOff[spot],a)
             return a
 
         def switch_to_ver(has_plate,a):
-            if has_plate:
+            if has_plate: # Add these checkpoints if the arm is currently holding a plate
                 a = cp(i,self.sw_putHor,a)
                 a = cp(i,self.gripper_open,a)
                 a = cp(i,self.horToVer,a)
                 a = cp(i,self.sw_getVer,a)
-            else:
+            else: # If the arm is now holding a plate, add this plate
                 a = cp(i,self.horToVer,a)
             return a
 
@@ -133,7 +146,10 @@ class BuildProtocol:
         # Add checkpoints
         p = self.protocol
         
-        for i in range(len(p)): # Incase a longer main path should be built in one go in the future
+        # Loops thro the main paths from the input.
+        # Currently only checks between two spots.
+        # Useful incase a longer main path should be built in one go in the future
+        for i in range(len(p)): 
             # a handles offsets in the list
             s = str(p[i+a]) if len(p) > i+a else str(p[-1]) # current step
             sn = str(p[i+1+a]) if len(p) > i+a+1 else s # next step
@@ -143,23 +159,26 @@ class BuildProtocol:
 
             a = cp(i,self.h_checkPoint,a)
 
+            # Check if a number is included in the current move
             s_num = re.findall(r'[0-9]+',s)
             sn_num = re.findall(r'[0-9]+',sn)
     
+            # Check if a hotel middle checkpoint is needed
             if (self.hg in sn or self.hp in sn): # Going to a hotel spot
-                if sn_num < self.HOTEL_SPOTS/2: # Need extra checkpoint if going to bottom half
+                if sn_num < self.HOTEL_SPOTS/2: # Need extra checkpoint if going to bottom half of hotel
                     a = cp(i,self.h_checkPoint,a)
             elif (self.hg in s or self.hp in s): # If last spot was hotel and next isn't
                 if s_num < self.HOTEL_SPOTS/2:
                     a = cp(i,self.h_checkPoint,a)
 
 
-            # Add proper lid and delidding, side function
-            # Determine shaker path
-            if s in self.hg and sn in self.hg: # Go from starting pos to
+          
+            # Check current spot s and next spot sn
+            # to determine what checkpoints should be added
+            if s in self.hg and sn in self.hg: # Go from starting pos to starting pos (ini step)
                 break
-            elif self.hg in s:
-                if self.washer_play in sn:
+            elif self.hg in s: # Check if current spot is hotel get
+                if self.washer_play in sn: # Check if next spot is washer play. Etc..
                     a = cp(i,self.h_to_sw,a)
                     a = put_lid_off(a)
                     a = cp(i,self.sw_to_washHigh,a)
@@ -258,6 +277,7 @@ class BuildProtocol:
             #     for x in self.protocol:
             #         f.write(str(x) +'\n')
 
+            # Return the newly built protocol list with all the checkpoints
             return self.protocol
 
 

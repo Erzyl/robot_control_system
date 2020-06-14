@@ -14,11 +14,14 @@ class EventClient:
 
     def connect(self, input):
 
-        # Specific input for singla command at to current protocol
+        # Take a protocol input and saves it to a list
+        # (Change this to collect data from URL)
         with open(input) as f:
             self.protocol = f.read().splitlines()
 
 
+        # Connect to server and send protocol list.
+        # Use pickle to conviniently be able to send the list
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             s.connect((self.host, self.port))
 

@@ -7,7 +7,8 @@ from datetime import datetime
 
 class RoboRun:
 
-    DEFAULT_PATH = "/programs/FINAL/"
+    # Various device default paths
+    DEFAULT_PATH = "/programs/FINAL/" # Path to URP-files on the robot computer
     WASHER_PATH = "http://washer.lab.pharmb.io:5000/execute_protocol/"
     DISPENSER_PATH = "http://dispenser.lab.pharmb.io:5001/execute_protocol/"
     SHAKER_PATH = ""
@@ -17,24 +18,27 @@ class RoboRun:
         self.pd = BuildProtocol()
 
     def start(self, telnet_connection, protocol, data_list, plate_id):
-        self.tn = telnet_connection
-        self.protocol = protocol
+        self.tn = telnet_connection # Get the telnet connection to the robot computer
+        self.protocol = protocol # Get the protocol list with the checkpoints
         self.hotel_spots = data_list[0]
         self.lid_spots = data_list[1]
         self.plate_id = plate_id
 
-        self.run()
+        self.run() # Run the robot and the devices
         
-        data = [self.hotel_spots,self.lid_spots]
+        # Pack and return modified spot lists
+        data = [self.hotel_spots,self.lid_spots] 
         return data
 
 
+    # Saves a string and time stemp to a file
     def log(self,str_):
         with open('log', 'a') as file:
             do = datetime.now()
             file.write(do.hour, ':', do.minute, ':', do.second, ' ',str_)
 
 
+    # Runs the robot and the devices
     def run(self):
 
         # Handle protective stop
@@ -43,7 +47,7 @@ class RoboRun:
         # if status == "PROTECTIVE_STOP":
         #     self.tn.write(b"unlock protective stop\n")
 
-        # Execute
+        # Executes each command in the protocol list
         for c in self.protocol:
             self.execute_protocol(c)
 
@@ -51,9 +55,12 @@ class RoboRun:
         #self.tn.write(b"quit\n")
 
 
+    # Executes inputed command
     def execute_protocol(self, program):
 
-        if self.pd.washer_play in program:
+        # Check type of command
+        # (Could probably be organized better)
+        if self.pd.washer_play in program: # Runs if current command is washer play. Etc..
             self.play_washer(program)
         elif self.pd.dispenser_play in program:
             self.play_dispenser(program)
@@ -68,18 +75,21 @@ class RoboRun:
         # elif program == self.pd.shaker_wait:
         #     while (not self.is_shaker_ready()):
         #         time.sleep(1)
-        else:
+        else: # If the command is a command to the robot
             print("Loading: "+program)
+
+            # Put together full command string with path and current command
             prog = "load " + self.DEFAULT_PATH + program + ".urp\n"
+            # Send the data as bytes to thro the telnet connection
             self.tn.write(bytes(prog, 'ascii'))
             time.sleep(1)
+            # Send the play command thro the telnet connection
             self.tn.write(b"play\n")
             time.sleep(1)
 
             self.log("Moving plate "+ str(self.plate_id) + " to " + str(program))
 
-            has_played = False
-            #self.get_run_status()
+            has_played = False # Will stay at false if robots run status is never true
             while self.get_run_status() == "Program running: true\n": # Freeze roboRunner if arm is being used
                 print("PLAYING")
                 time.sleep(1)
@@ -103,12 +113,16 @@ class RoboRun:
                 self.log("Failed moving plate "+ str(self.plate_id) + " to " + str(program))
 
 
+    # Return a list index of a specific value
+    # Including exception for non-existing
     def get_list_spot(self,plate_id,lista):
         try:
             return lista.index(plate_id)
         except ValueError:
             return -1
 
+    # Play the various devices by sending the corresponding
+    # get requests:
     def play_washer(self, protocol):
         time.sleep(1) # Give the arm time to move out of the way
         while (not self.is_washer_ready()):
@@ -140,6 +154,8 @@ class RoboRun:
         requests.get(self.SHAKER_PATH + p2)
 
 
+    # Wait for the various devices by sending the corresponding
+    # get requests:
     def is_dispenser_ready(self):
         r = requests.get('http://dispenser.lab.pharmb.io:5001/is_ready')
         r_dict = r.json()
@@ -171,6 +187,7 @@ class RoboRun:
             return False
 
 
+    # Get last buffered item from telnet connection
     def read_last(self):
         #buffer = self.tn.read_eager().decode('ascii')
         buffer = self.tn.read_very_eager().decode('ascii')
@@ -178,6 +195,8 @@ class RoboRun:
         return buffer
 
 
+    # Handles geting the last item from the telnet conection
+    # by also removing junk.
     def get_run_status(self):
         junk = self.tn.read_very_eager()
         self.tn.write(b"running\n")

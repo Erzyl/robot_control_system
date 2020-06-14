@@ -17,23 +17,27 @@ from Prioritizer import Prioritizer
 class EventServer:
 
     def __init__(self,ip = '127.0.0.1',port = 65432):
-        self.host = ip
-        self.port = port
-        self.Running = True # Run robot and devices
+        self.host = ip # IP to run input server on
+        self.port = port # Port to run input server on
+        self.Running = True # For debuging: Run robot and devices
 
-        self.plate_list = []
-        self.lid_spots = [-1]*3
-        self.hotel_spots = [0]*14
+        self.plate_list = [] # List to collect all added plates
+        self.lid_spots = [-1]*3 # Amount of lid spots, -1 means the spot is free
+        self.hotel_spots = [0]*14 # Amount of hotel spots
 
-        self.current_global_position = "h_get"
+        self.current_global_position = "h_get" # Current system position (default h_get)
         self.build_checkpoints = BuildProtocol()
         self.robot_connection = RoboConnect()
         self.robot_run = RoboRun()
         self.prioritizer = Prioritizer()
 
-        self.connect_to_robot = True # For debugging without connecting to robot
+        self.connect_to_robot = True # For debugging: Connecting to robot
 
 
+    # Run the different threads
+    # - Get key inputs
+    # - Plate input server
+    # - Robot and device running
     def run_server(self):
 
         # Start connection to robot server
@@ -53,20 +57,24 @@ class EventServer:
         input_server.start()
 
 
+    # Saves a string and time stamp to a file
     def log(self,str_):
         with open('log', 'a') as file:
             do = datetime.now()
             file.write(do.hour, ':', do.minute, ':', do.second, ' ',str_)
 
 
+    # Run the robot and devices by picking
+    # what plate to move next with the priorotizer.
     def system_runner(self):
 
-        while True:
-
+        while True: # Loop forever
+            # Don't run if the plate list is empty
             if len(self.plate_list) == 0:
                 time.sleep(2)
                 continue
 
+            # Perform the next move. (Robot / Device)
             # Add threading here for overlapping movment
             self.move_next()
 
