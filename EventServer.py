@@ -79,35 +79,40 @@ class EventServer:
             self.move_next()
 
 
+    # Performs the actions needed to advance the system
+    # - Sets up where to move from and to (with the help of the priorotizer)
+    # - Uses the checkpoint builder to get checkpoints between these points
+    # - Uses the telnet connection to the robot computer to issue the commands
     # When reached target, change current to dest and move on etc.
     def move_next(self): # Do the next moves
-        move_from = self.current_global_position
-        plateToMove = self.prioritizer.get_prio_plate(self.plate_list,self.hotel_spots,self.lid_spots)
-        move_to = plateToMove.path[plateToMove.cur_step]
-        movment = [move_from,move_to]
+        move_from = self.current_global_position # The position to move from
+        plateToMove = self.prioritizer.get_prio_plate(self.plate_list,self.hotel_spots,self.lid_spots) # Get what plate should be moved
+        move_to = plateToMove.path[plateToMove.cur_step] # Where to move this plate
+        movment = [move_from,move_to] # Pack it into a list for convenience (and in case longer movements will be done in the futuure)
         self.log("Deciding to move plate " +str(plateToMove.id)) 
 
-        data_list = [self.hotel_spots,self.lid_spots]
-        movement_with_cp = self.build_checkpoints.build_protocol(movment,plateToMove.id, data_list)
+        data_list = [self.hotel_spots,self.lid_spots] # Get the current hotel and lid spot statuses and pack it to a list
+        movement_with_cp = self.build_checkpoints.build_protocol(movment,plateToMove.id, data_list) # Build checkpoints
 
         # Run system between the 2 steps including checkpoints
         if self.connect_to_robot:
-            updated_lists = self.robot_run.start(self.robot_connection.tn, movement_with_cp,data_list,plateToMove) # Holds this thread until run is done, might want to split
+            updated_lists = self.robot_run.start(self.robot_connection.tn, movement_with_cp,data_list,plateToMove) # Holds this thread until the run is done, might want to split
 
             self.hotel_spots = updated_lists[0]
             self.lid_spots = updated_lists[1]
 
-            self.current_global_position = move_to
+            self.current_global_position = move_to # Set the systems current global position to where it just moved
             self.plate_list[self.get_plate_list_index(plateToMove)].step() # Advance plate to next step in path
             
-        else: 
+        else: # For debugging
             time.sleep(20)
 
 
+    # Establish TCP-connection to accept protocol on 
     def plate_inputs(self):
         # Adress family - IPv4; Socket type - TCP;
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1) # To force socket rebindin
+            s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1) # To force socket rebinding
             s.bind((self.host, self.port)) # Associate socket with specific network interface nad port
             s.listen() # Enables server to accept connections / Makes it a listening socket
             print('Protocol server started successfully!')
@@ -121,13 +126,12 @@ class EventServer:
                     # Add new plate
                     print('New entry by', addr)
                     data = pickle.loads(conn.recv(4096)) # Reads what client sends
-                    plate_number = len(self.plate_list)+1
+                    plate_number = len(self.plate_list)+1 # Currently assigns the plate numbers (id) with +1, this should be changed
 
-                    h_spot = re.findall(r'[0-9]+',data[0])
+                    h_spot = re.findall(r'[0-9]+',data[0]) # Get the hotel spot to take the plate from
+                    self.hotel_spots[int(h_spot[0])-1] = plate_number # Book that hotel spot in the list
 
-                    self.hotel_spots[int(h_spot[0])-1] = plate_number
-
-                    newPlate = Plate(plate_number,data)
+                    newPlate = Plate(plate_number,data) # Create a new plate object
 
                     self.plate_list.append(newPlate)
                     self.log("New plate added with id: "+str(plate_number) + " ,at spot:" + str(h_spot))
@@ -137,7 +141,11 @@ class EventServer:
         #s.close()
 
 
-    ### CHECK INPUTS ###
+    # Check for inputs 
+    # (This gets a bit messy to run at the server because of
+    # all the outputs in the terminal.
+    # There should probably be a input client or something
+    # instead.)
     def get_input(self,s):
         while True:
             s = input()
@@ -158,7 +166,7 @@ class EventServer:
             elif "check lid" in s:
                 self.check_lid()
 
-
+    # Print and log hotel spot status
     def check_hotel(self):
         i = 0
         for cur_spot in self.hotel_spots:
@@ -172,7 +180,7 @@ class EventServer:
             self.log("str_")
             i += 1
 
-
+    # Print and log lid spot status
     def check_lid(self):
         i = 0
         for cur_spot in self.lid_spots:
@@ -186,14 +194,14 @@ class EventServer:
             self.log(str_)
             i += 1
 
-
+    # Print and log plates in the system
     def check_plates(self):
         for cur_plate in self.plate_list:
             str_ = "Plate id: " + str(cur_plate.id)
             print(str_)
             self.log(str_)
 
-
+    # Print info about certain plate
     def get_plate_info(self,plate_num):
         plate = self.plate_list[plate_num]
         print("Plate id: {0}, status:".format(plate.id))
@@ -201,11 +209,13 @@ class EventServer:
         # Check if not at last
         print("Destination: {0}".format(plate.path[plate.cur_step+1]))
 
+    # Helper to check for digit
     def is_num(self,string):
         return any(i.isdigit() for i in string)
 
 
-    ### Get spots ###
+    # Return a list index of a specific value
+    # Including exception for non-existing
     def get_plate_list_index(self,id):
         i = 0
         for p in self.plate_list:
@@ -213,7 +223,7 @@ class EventServer:
                 return i
             i+=1
 
-
+    # Get the index of a spot with the value -1 (a free spot)
     def get_list_spot(self,plate_id,lista):
         try:
             return lista.index(plate_id)
