@@ -16,7 +16,7 @@ from Prioritizer import Prioritizer
 
 class EventServer:
 
-    def __init__(self,ip = '127.0.0.1',port = 65432):
+    def __init__(self,ip = '127.0.0.1',port = 12345):
         self.host = ip # IP to run input server on
         self.port = port # Port to run input server on
         self.Running = True # For debuging: Run robot and devices
@@ -234,5 +234,5 @@ class EventServer:
 
 
 if __name__ == "__main__":
-    e = EventServer("127.0.0.1",65432)
+    e = EventServer("127.0.0.1", 12345)
     e.run_server()
