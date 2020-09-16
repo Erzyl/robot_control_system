@@ -9,7 +9,7 @@ class EventClient:
 
     def __init__(self):
         self.host = '127.0.0.1'  # The server's hostname or IP address
-        self.port = 65432        # The port used by the server
+        self.port = 12345        # The port used by the server
 
 
     def connect(self, input):
