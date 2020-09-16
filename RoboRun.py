@@ -8,9 +8,9 @@ from datetime import datetime
 class RoboRun:
 
     # Various device default paths
-    DEFAULT_PATH = "/programs/FINAL/" # Path to URP-files on the robot computer
-    WASHER_PATH = "http://washer.lab.pharmb.io:5000/execute_protocol/"
-    DISPENSER_PATH = "http://dispenser.lab.pharmb.io:5001/execute_protocol/"
+    DEFAULT_PATH = "/place//" # Path to URP-files on the robot computer
+    WASHER_PATH = "http://.."
+    DISPENSER_PATH = "http://.."
     SHAKER_PATH = ""
 
     def __init__(self):
@@ -157,7 +157,7 @@ class RoboRun:
     # Wait for the various devices by sending the corresponding
     # get requests:
     def is_dispenser_ready(self):
-        r = requests.get('http://dispenser.lab.pharmb.io:5001/is_ready')
+        r = requests.get('http:')
         r_dict = r.json()
         if str(r_dict['value']) == "True":
             print("Dispenser is ready")
@@ -167,7 +167,7 @@ class RoboRun:
             return False
 
     def is_washer_ready(self):
-        r = requests.get('http://washer.lab.pharmb.io:5000/is_ready')
+        r = requests.get('http:')
         r_dict = r.json()
         if str(r_dict['value']) == "True":
             print("Washer is ready")
@@ -177,7 +177,7 @@ class RoboRun:
             return False
 
     def is_shaker_ready(self):
-        r = requests.get('http://shaker.lab.pharmb.io:5000/is_ready')
+        r = requests.get('http:')
         r_dict = r.json()
         if str(r_dict['value']) == "True":
             print("Shaker is ready")
