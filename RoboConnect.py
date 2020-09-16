@@ -2,8 +2,8 @@ import telnetlib
 #import traceback
 
 class RoboConnect:
-    HOST = "130.238.44.58" # Robot computer IP
-    PORT = 29999 # Robot computer port
+    HOST = "127.0.0.1" # Robot computer IP
+    PORT = 12345 # Robot computer port
 
     def __init__(self):
         self.tn = -1
